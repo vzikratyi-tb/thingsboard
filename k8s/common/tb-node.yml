@@ -38,10 +38,12 @@ spec:
                 path:  thingsboard.conf
               - key: logback
                 path:  logback.xml
+        - name: tb-node-logs
+          emptyDir: {}
       containers:
         - name: server
           imagePullPolicy: Always
-          image: thingsboard/tb-node:latest
+          image: thingsboard/tb-node:2.5.1
           ports:
             - containerPort: 8080
               name: http
@@ -76,6 +78,8 @@ spec:
           volumeMounts:
             - mountPath: /config
               name: tb-node-config
+            - mountPath: /var/log/thingsboard
+              name: tb-node-logs
           livenessProbe:
             httpGet:
               path: /login

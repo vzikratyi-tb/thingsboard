@@ -86,7 +86,9 @@ fi
 
 source .env
 
-kubectl apply -f common/tb-namespace.yml
+if [ "$PLATFORM" == "minikube" ]; then
+    kubectl apply -f common/tb-namespace.yml
+fi
 kubectl config set-context $(kubectl config current-context) --namespace=thingsboard
 
 case $DEPLOYMENT_TYPE in

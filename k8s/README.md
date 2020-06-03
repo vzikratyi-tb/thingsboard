@@ -7,16 +7,38 @@ This folder containing scripts and Kubernetes resources configurations to run Th
 ThingsBoard Microservices are running on Kubernetes cluster.
 You need to have a Kubernetes cluster, and the kubectl command-line tool must be configured to communicate with your cluster.
 If you do not already have a cluster, you can create one by using [Minikube](https://kubernetes.io/docs/setup/minikube), 
-or you can choose any other available [Kubernetes cluster deployment solutions](https://kubernetes.io/docs/setup/pick-right-solution/).
+[OpenShift](https://www.techrepublic.com/article/how-to-install-openshift-origin-on-ubuntu-18-04/),
+or you can choose any other available [Kubernetes cluster deployment solutions](https://unofficial-kubernetes.readthedocs.io/en/latest/setup/pick-right-solution/).
 
-### Enable ingress addon
+### Minikube Configuration
 
+#### Enable ingress addon 
 By default ingress addon is disable in the Minikube, and available only in cluster providers.
 To enable ingress, please execute next command:
 
 `
 $ minikube addons enable ingress
 ` 
+
+### OpenShift Configuration
+
+#### Create project 
+On the first start-up you should create the `thingsboard` project.
+To create it, please execute next command:
+
+`
+$ oc new-project thingsboard
+` 
+
+**NOTE**: Make sure your `kubectl` tool is using the correct cluster context.
+You can see all kubectl context and set the correct one using commands:
+
+`
+$ kubectl config get-contexts
+$ kubectl config use-context THINGSBOARD_CONTEXT
+`
+
+Where `THINGSBOARD_CONTEXT` will be something like `thingsboard/SERVER_IP:SERVER_PORT/USER`.
 
 ## Installation
 
@@ -36,7 +58,7 @@ It is recommended to have 3 Cassandra nodes with `CASSANDRA_REPLICATION_FACTOR` 
 In order to set deployment type change the value of `DEPLOYMENT_TYPE` variable in `.env` file to one of the following:
 
 - `basic` - start up with single instance of Zookeeper, Kafka and Redis;
-- `high-availability` - start up with Zookeeper, Kafka and Redis in cluster modes;
+- `high-availability` - start up with Zookeeper, Kafka and Redis in cluster modes and PostgreSQL in replica mode if it was chosen as Database;
 
 **NOTE**: According to the deployment type corresponding kubernetes resources will be deployed (see content of the directories `./basic` and `./high-availability` for details).
 
@@ -60,7 +82,7 @@ Execute the following command to deploy thirdparty resources:
 $ ./k8s-deploy-thirdparty.sh
 `
 
-Type **'yes'** when prompted, if you are running ThingsBoard in `high-availability` `DEPLOYMENT_TYPE` for the first time and don't have configured Redis cluster.
+Type **'yes'** when prompted, if you are running ThingsBoard in `high-availability` `DEPLOYMENT_TYPE` for the first time or if you don't have configured Redis cluster.
 
 Before deploying ThingsBoard resources you can configure number of pods for each service in `./common/thingsboard.yml` by changing `spec.replicas` fields for different services. 
 It is recommended to have at least 2 `tb-node` and 10 `tb-js-executor`.
@@ -72,6 +94,8 @@ $ ./k8s-deploy-resources.sh
 
 After a while when all resources will be successfully started you can open `http://{your-cluster-ip}` in you browser (for ex. `http://192.168.99.101`).
 You should see ThingsBoard login page.
+
+**NOTE**: If you're using OpenShift cluster you can view all Routes in Web GUI under Applications/Routes menu (main route by default starts with `tb-route-node-root-thingsboard`).
 
 Use the following default credentials:
 
