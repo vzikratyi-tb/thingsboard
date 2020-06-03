@@ -19,8 +19,7 @@ function installTb() {
 
     loadDemo=$1
 
-    # TODO fix
-    kubectl apply -f $DEPLOYMENT_TYPE/tb-node-postgres-configmap.yml
+    kubectl apply -f $DEPLOYMENT_TYPE/$DATABASE/tb-node-db-configmap.yml
 
     kubectl apply -f common/tb-node-configmap.yml
     kubectl apply -f common/database-setup.yml &&
