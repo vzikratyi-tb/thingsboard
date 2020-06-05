@@ -14,6 +14,20 @@
 # limitations under the License.
 #
 
+#apiVersion: v1
+#kind: PersistentVolumeClaim
+#metadata:
+#  name: tb-node-logs-claim
+#  namespace: thingsboard
+#  labels:
+#    app: tb-node
+#spec:
+#  accessModes:
+#    - ReadWriteOnce
+#  resources:
+#    requests:
+#      storage: 200Mi
+#---
 apiVersion: v1
 kind: Pod
 metadata:
@@ -29,15 +43,26 @@ spec:
         path: thingsboard.conf
       - key: logback
         path: logback.xml
+  - name: tb-node-logs
+    emptyDir: {}
+  #    persistentVolumeClaim:
+#      claimName: tb-node-logs-claim
   containers:
   - name: tb-db-setup
     imagePullPolicy: Always
-    image: thingsboard/tb-node:latest
+    image: vzikratyi/tb-node:2.5.1-SNAPSHOT
+    env:
+      - name: TB_SERVICE_ID
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.name
     envFrom:
     - configMapRef:
         name: tb-node-db-config
     volumeMounts:
       - mountPath: /config
         name: tb-node-config
+      - mountPath: /var/log/thingsboard
+        name: tb-node-logs
     command: ['sh', '-c', 'while [ ! -f /tmp/install-finished ]; do sleep 2; done;']
   restartPolicy: Never

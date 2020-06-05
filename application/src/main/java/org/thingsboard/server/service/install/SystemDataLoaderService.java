@@ -22,6 +22,7 @@ public interface SystemDataLoaderService {
     void createAdminSettings() throws Exception;
 
     void loadSystemWidgets() throws Exception;
+    void loadDummyData() throws Exception;
 
     void loadDemoData() throws Exception;
 
