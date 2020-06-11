@@ -24,9 +24,9 @@ global:
     username: postgres
     password: postgres
     database: thingsboard
-    repmgrUsername: repmgruser
-    repmgrPassword: repmgrpassword
-    repmgrDatabase: repmgrdatabase
+#    repmgrUsername: repmgruser
+#    repmgrPassword: repmgrpassword
+#    repmgrDatabase: repmgrdatabase
 #    existingSecret: myExistingSecret
 #   ldap:
 #     bindpw: bindpassword
@@ -140,7 +140,7 @@ postgresql:
 
   ## Number of replicas to deploy
   ##
-  replicaCount: 4
+  replicaCount: 2
 
   ## Update strategy for PostgreSQL statefulset
   ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies

@@ -189,18 +189,14 @@ public class ThingsboardInstallService {
 
                 systemDataLoaderService.createSysAdmin();
                 systemDataLoaderService.createAdminSettings();
-
-                log.info("Loading dummy data...");
-                systemDataLoaderService.loadDummyData();
-//                systemDataLoaderService.loadSystemWidgets();
-
+                systemDataLoaderService.loadSystemWidgets();
 //                systemDataLoaderService.loadSystemPlugins();
 //                systemDataLoaderService.loadSystemRules();
 
-//                if (loadDemo) {
-//                    log.info("Loading demo data...");
-//                    systemDataLoaderService.loadDemoData();
-//                }
+                if (loadDemo) {
+                    log.info("Loading demo data...");
+                    systemDataLoaderService.loadDemoData();
+                }
                 log.info("Installation finished successfully!");
             }
 

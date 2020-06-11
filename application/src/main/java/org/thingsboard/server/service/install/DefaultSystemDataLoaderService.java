@@ -54,7 +54,6 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 import java.util.Arrays;
-import java.util.UUID;
 
 @Service
 @Profile("install")
@@ -217,22 +216,6 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     @Override
     public void loadSystemWidgets() throws Exception {
         installScripts.loadSystemWidgets();
-    }
-
-    @Override
-    public void loadDummyData() throws Exception {
-        for (int i = 0; i < 10_000; i++) {
-            Tenant demoTenant = new Tenant();
-            demoTenant.setRegion("Global");
-            demoTenant.setTitle("Tenant #" + i);
-            demoTenant = tenantService.saveTenant(demoTenant);
-            TenantId tenantId = demoTenant.getTenantId();
-            Tenant sameTenant = tenantService.findTenantById(tenantId);
-            if (sameTenant == null) {
-                log.error("Tenant with ID {} not found after save, i - {}.", tenantId, i);
-                throw new RuntimeException("Tenant with ID " + tenantId + " not found after save (i - " + i + ").");
-            }
-        }
     }
 
     private User createUser(Authority authority,
