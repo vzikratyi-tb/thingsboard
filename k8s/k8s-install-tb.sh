@@ -19,6 +19,8 @@ function installTb() {
 
     loadDemo=$1
 
+    kubectl apply -f $DEPLOYMENT_TYPE/$DATABASE/tb-node-db-configmap.yml
+
     kubectl apply -f common/tb-node-configmap.yml
     kubectl apply -f common/database-setup.yml &&
     kubectl wait --for=condition=Ready pod/tb-db-setup --timeout=120s &&
@@ -29,8 +31,6 @@ function installTb() {
 }
 
 function installPostgres() {
-
-   kubectl apply -f $DEPLOYMENT_TYPE/tb-node-postgres-configmap.yml
 
     if [ "$DEPLOYMENT_TYPE" == "high-availability" ]; then
         kubectl apply -f $DEPLOYMENT_TYPE/pgpool-configmap.yml
@@ -52,7 +52,6 @@ function installCassandra() {
     fi
 
     kubectl apply -f common/cassandra.yml
-    kubectl apply -f common/tb-node-cassandra-configmap.yml
 
     kubectl rollout status statefulset/cassandra
 
@@ -108,12 +107,13 @@ case $DATABASE in
             installPostgres
             installTb ${loadDemo}
         ;;
-        cassandra)
+        hybrid)
+            installPostgres
             installCassandra
             installTb ${loadDemo}
         ;;
         *)
-        echo "Unknown DATABASE value specified: '${DATABASE}'. Should be either postgres or cassandra." >&2
+        echo "Unknown DATABASE value specified: '${DATABASE}'. Should be either postgres or hybrid." >&2
         exit 1
 esac
 
