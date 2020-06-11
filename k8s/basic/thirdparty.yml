@@ -300,7 +300,6 @@ spec:
   ports:
     - port: 9092
       name: kafka-int
-
   clusterIP: None
 ---
 apiVersion: apps/v1
