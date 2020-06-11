@@ -33,9 +33,11 @@ function installPostgres() {
    kubectl apply -f $DEPLOYMENT_TYPE/tb-node-postgres-configmap.yml
 
     if [ "$DEPLOYMENT_TYPE" == "high-availability" ]; then
+        kubectl apply -f $DEPLOYMENT_TYPE/pgpool-configmap.yml
         helm repo add bitnami https://charts.bitnami.com/bitnami
         helm install my-release -f $DEPLOYMENT_TYPE/postgres-ha.yaml bitnami/postgresql-ha
         kubectl rollout status statefulset my-release-postgresql-ha-postgresql
+        kubectl rollout status deployment my-release-postgresql-ha-pgpool
     else
         kubectl apply -f $DEPLOYMENT_TYPE/postgres.yml
         kubectl rollout status deployment/postgres

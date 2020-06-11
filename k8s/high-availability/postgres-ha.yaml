@@ -24,9 +24,9 @@ global:
     username: postgres
     password: postgres
     database: thingsboard
-#     repmgrUsername: repmgruser
-#     repmgrPassword: repmgrpassword
-#     repmgrDatabase: repmgrdatabase
+#    repmgrUsername: repmgruser
+#    repmgrPassword: repmgrpassword
+#    repmgrDatabase: repmgrdatabase
 #    existingSecret: myExistingSecret
 #   ldap:
 #     bindpw: bindpassword
@@ -62,7 +62,7 @@ postgresqlImage:
 ##
 pgpoolImage:
   repository: bitnami/pgpool
-  tag: 4.1.1-debian-10-r66
+  tag: 4.1.2-debian-10-r17
   ## Specify a imagePullPolicy. Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
   ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
   ##
@@ -176,10 +176,10 @@ postgresql:
   ## https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
   ##
 
-  #  securityContext:
-  #    enabled: true
-  #    fsGroup: 1001
-  #    runAsUser: 1001
+  securityContext:
+    enabled: true
+    fsGroup: 1000080000
+    runAsUser: 1000080000
 
   ## PostgreSQL containers' resource requests and limits
   ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
@@ -235,7 +235,7 @@ postgresql:
 
   ## Configures pg_hba.conf to trust every user
   ##
-  pgHbaTrustAll: true
+  pgHbaTrustAll: false
 
   ## Repmgr configuration parameters
   ##
@@ -353,10 +353,10 @@ pgpool:
   ## K8s Security Context
   ## https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
   ##
-  #  securityContext:
-  #    enabled: true
-  #    fsGroup: 1001
-  #    runAsUser: 1001
+  securityContext:
+    enabled: true
+    fsGroup: 1000080000
+    runAsUser: 1000080000
 
   ## Pgpool containers' resource requests and limits
   ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
@@ -424,16 +424,15 @@ pgpool:
   ## ConfigMap with Pgpool configuration
   ## NOTE: This will override pgpool.configuration parameter
   ##
-  # configurationCM:
+  configurationCM: pgpool
 
   ## initdb scripts
   ## Specify dictionary of scripts to be run everytime Pgpool container is initialized
   ## Alternatively, you can put your scripts under the files/pgpool-entrypoint-initdb.d directory
   ##
-  # initdbScripts:
-  #   my_init_script.sh: |
-  #      #!/bin/sh
-  #      echo "Do something."
+#  initdbScripts:
+#    my_init_script.sh: |
+#      #!/bin/sh
 
   ## ConfigMap with scripts to be run everytime Pgpool container is initialized
   ## NOTE: This will override pgpool.initdbScripts
@@ -497,9 +496,10 @@ metrics:
   ## https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
   ##
 
-  #  securityContext:
-  #    enabled: true
-  #    runAsUser: 1001
+  securityContext:
+    enabled: true
+    fsGroup: 1000080000
+    runAsUser: 1000080000
 
   ## Prometheus exporter containers' resource requests and limits
   ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
