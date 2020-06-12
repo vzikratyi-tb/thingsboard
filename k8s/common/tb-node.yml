@@ -20,7 +20,7 @@ metadata:
   name: tb-node
   namespace: thingsboard
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: tb-node
@@ -43,7 +43,7 @@ spec:
       containers:
         - name: server
           imagePullPolicy: Always
-          image: thingsboard/tb-node:2.5.1
+          image: thingsboard/tb-node:latest
           ports:
             - containerPort: 8080
               name: http
