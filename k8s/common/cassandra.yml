@@ -14,15 +14,6 @@
 # limitations under the License.
 #
 
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
-metadata:
-  name: fast
-  namespace: thingsboard
-provisioner: k8s.io/minikube-hostpath
-parameters:
-  type: pd-ssd
----
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -67,10 +58,10 @@ spec:
         configMap:
           name: cassandra-config
           defaultMode: 0755
-      terminationGracePeriodSeconds: 1800
+      terminationGracePeriodSeconds: 60
       containers:
       - name: cassandra
-        image: cassandra:3.11.6
+        image: bitnami/cassandra:3.11.6
         imagePullPolicy: Always
         ports:
         - containerPort: 7000
@@ -90,10 +81,6 @@ spec:
           requests:
             cpu: "1000m"
             memory: 2Gi
-        securityContext:
-          capabilities:
-            add:
-              - IPC_LOCK
         lifecycle:
           preStop:
             exec:
@@ -141,7 +128,6 @@ spec:
       name: cassandra-data
     spec:
       accessModes: [ "ReadWriteOnce" ]
-      storageClassName: fast
       resources:
         requests:
           storage: 500Mi

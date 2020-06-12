@@ -29,3 +29,6 @@ data:
   SPRING_DATASOURCE_URL: jdbc:postgresql://my-release-postgresql-ha-pgpool:5432/thingsboard
   SPRING_DATASOURCE_USERNAME: postgres
   SPRING_DATASOURCE_PASSWORD: postgres
+  CASSANDRA_USE_CREDENTIALS: 'true'
+  CASSANDRA_USERNAME: cassandra
+  CASSANDRA_PASSWORD: cassandra

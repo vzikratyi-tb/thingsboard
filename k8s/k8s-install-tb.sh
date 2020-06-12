@@ -55,7 +55,7 @@ function installCassandra() {
 
     kubectl rollout status statefulset/cassandra
 
-    kubectl exec -it cassandra-0 -- bash -c "cqlsh -e \
+    kubectl exec -it cassandra-0 -- bash -c "cqlsh -u cassandra -p cassandra -e \
                     \"CREATE KEYSPACE IF NOT EXISTS thingsboard \
                     WITH replication = { \
                         'class' : 'SimpleStrategy', \
