@@ -57,14 +57,14 @@ It is recommended to have 3 Cassandra nodes with `CASSANDRA_REPLICATION_FACTOR` 
 
 In order to set deployment type change the value of `DEPLOYMENT_TYPE` variable in `.env` file to one of the following:
 
-- `basic` - start up with single instance of Zookeeper, Kafka and Redis;
-- `high-availability` - start up with Zookeeper, Kafka and Redis in cluster modes and PostgreSQL in replica mode if it was chosen as Database;
+- `basic` - startup with a single instance of Zookeeper, Kafka and Redis;
+- `high-availability` - startup with Zookeeper, Kafka, and Redis in cluster modes;
 
-**NOTE**: According to the deployment type corresponding kubernetes resources will be deployed (see content of the directories `./basic` and `./high-availability` for details).
+**NOTE**: According to the deployment type corresponding kubernetes resources will be deployed (see the content of the directories `./basic` and `./high-availability` for details).
 
 Also, to run PostgreSQL in `high-availability` deployment mode you'll need to  [install](https://helm.sh/docs/intro/install/) `helm`.
 
-Execute the following command to run installation:
+Execute the following command to run the installation:
 
 `
 $ ./k8s-install-tb.sh --loadDemo
@@ -76,7 +76,7 @@ Where:
 
 ## Running
 
-Execute the following command to deploy thirdparty resources:
+Execute the following command to deploy third-party resources:
 
 `
 $ ./k8s-deploy-thirdparty.sh
@@ -92,8 +92,8 @@ Execute the following command to deploy resources:
 $ ./k8s-deploy-resources.sh
 `
 
-After a while when all resources will be successfully started you can open `http://{your-cluster-ip}` in you browser (for ex. `http://192.168.99.101`).
-You should see ThingsBoard login page.
+After a while when all resources will be successfully started you can open `http://{your-cluster-ip}` in your browser (for ex. `http://192.168.99.101`).
+You should see the ThingsBoard login page.
 
 **NOTE**: If you're using OpenShift cluster you can view all Routes in Web GUI under Applications/Routes menu (main route by default starts with `tb-route-node-root-thingsboard`).
 
@@ -106,16 +106,16 @@ If you installed DataBase with demo data (using `--loadDemo` flag) you can also 
 - **Tenant Administrator**: tenant@thingsboard.org / tenant
 - **Customer User**: customer@thingsboard.org / customer
 
-In case of any issues you can examine service logs for errors.
+In case of any issues, you can examine service logs for errors.
 For example to see ThingsBoard node logs execute the following commands:
 
-1) Get list of the running tb-node pods:
+1) Get the list of the running tb-node pods:
 
 `
 $ kubectl get pods -l app=tb-node
 `
 
-2) Fetch logs of tb-node pod:
+2) Fetch logs of the tb-node pod:
 
 `
 $ kubectl logs -f [tb-node-pod-name]
@@ -136,7 +136,7 @@ Execute the following command to delete all ThingsBoard microservices:
 $ ./k8s-delete-resources.sh
 `
 
-Execute the following command to delete all thirdparty microservices:
+Execute the following command to delete all third-party microservices:
 
 `
 $ ./k8s-delete-thirdparty.sh
