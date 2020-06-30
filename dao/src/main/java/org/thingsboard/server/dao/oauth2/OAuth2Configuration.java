@@ -50,17 +50,4 @@ public class OAuth2Configuration {
     public AuthenticatedPrincipalOAuth2AuthorizedClientRepository authorizedClientRepository() {
         return new AuthenticatedPrincipalOAuth2AuthorizedClientRepository(oAuth2AuthorizedClientService());
     }
-
-    @Bean
-    public OAuth2AuthorizationRequestResolver oAuth2AuthorizationRequestResolver() {
-        DefaultOAuth2AuthorizationRequestResolver defaultOAuth2AuthorizationRequestResolver = new DefaultOAuth2AuthorizationRequestResolver(clientRegistrationRepository, "/oauth2/authorization");
-        defaultOAuth2AuthorizationRequestResolver
-                .setAuthorizationRequestCustomizer(builder -> {
-                    Map<String, Object> additionalParams = new HashMap<>();
-                    additionalParams.put("access_type", "offline");
-                    additionalParams.put("prompt", "consent");
-                    builder.additionalParameters(additionalParams);
-                });
-        return defaultOAuth2AuthorizationRequestResolver;
-    }
 }
