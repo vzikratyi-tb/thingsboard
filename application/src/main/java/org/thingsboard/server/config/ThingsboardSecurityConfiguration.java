@@ -32,6 +32,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.client.web.AuthenticatedPrincipalOAuth2AuthorizedClientRepository;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestResolver;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -110,6 +112,11 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
     @Autowired private ObjectMapper objectMapper;
 
     @Autowired private RateLimitProcessingFilter rateLimitProcessingFilter;
+
+    @Autowired
+    private OAuth2AuthorizationRequestResolver oAuth2AuthorizationRequestResolver;
+    @Autowired
+    private AuthenticatedPrincipalOAuth2AuthorizedClientRepository authorizedClientRepository;
 
     @Bean
     protected RestLoginProcessingFilter buildRestLoginProcessingFilter() throws Exception {
@@ -208,7 +215,11 @@ public class ThingsboardSecurityConfiguration extends WebSecurityConfigurerAdapt
                 .addFilterBefore(buildWsJwtTokenAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(rateLimitProcessingFilter, UsernamePasswordAuthenticationFilter.class);
         if (oauth2Configuration != null) {
+            http.oauth2Client()
+                    .authorizationCodeGrant()
+                    .authorizationRequestResolver(oAuth2AuthorizationRequestResolver);
             http.oauth2Login()
+                    .authorizedClientRepository(authorizedClientRepository)
                     .loginPage("/oauth2Login")
                     .loginProcessingUrl(oauth2Configuration.getLoginProcessingUrl())
                     .successHandler(oauth2AuthenticationSuccessHandler)
