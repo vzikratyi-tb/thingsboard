@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.security.auth.jwt;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationDetailsSource;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContext;
@@ -25,6 +26,7 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.thingsboard.server.service.security.auth.JwtAuthenticationToken;
 import org.thingsboard.server.service.security.auth.jwt.extractor.TokenExtractor;
+import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetailsSource;
 import org.thingsboard.server.service.security.model.token.RawAccessJwtToken;
 
 import javax.servlet.FilterChain;
@@ -34,6 +36,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 public class JwtTokenAuthenticationProcessingFilter extends AbstractAuthenticationProcessingFilter {
+    private final AuthenticationDetailsSource<HttpServletRequest, ?> authenticationDetailsSource = new JwtAuthenticationDetailsSource();
+
     private final AuthenticationFailureHandler failureHandler;
     private final TokenExtractor tokenExtractor;
 
@@ -49,7 +53,9 @@ public class JwtTokenAuthenticationProcessingFilter extends AbstractAuthenticati
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
             throws AuthenticationException, IOException, ServletException {
         RawAccessJwtToken token = new RawAccessJwtToken(tokenExtractor.extract(request));
-        return getAuthenticationManager().authenticate(new JwtAuthenticationToken(token));
+        JwtAuthenticationToken authenticationToken = new JwtAuthenticationToken(token);
+        authenticationToken.setDetails(authenticationDetailsSource.buildDetails(request));
+        return getAuthenticationManager().authenticate(authenticationToken);
     }
 
     @Override
