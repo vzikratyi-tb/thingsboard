@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2020 The Thingsboard Authors
- * <p>
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.thingsboard.server.dao.oauth2.OAuth2Utils.*;
 
@@ -57,8 +56,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    private final ReentrantLock cacheWriteLock = new ReentrantLock();
-    private final Map<TenantId, OAuth2ClientsParams> clientsParams = new ConcurrentHashMap<>();
+    private final ReentrantLock clientRegistrationSaveLock = new ReentrantLock();
 
     @Autowired
     private Environment environment;
@@ -76,18 +74,9 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         return environment.acceptsProfiles("install");
     }
 
-    @PostConstruct
-    public void init() {
-        if (isInstall()) return;
-
-        Map<TenantId, OAuth2ClientsParams> allOAuth2ClientsParams = getAllOAuth2ClientsParams();
-
-        allOAuth2ClientsParams.forEach(clientsParams::put);
-    }
-
     @Override
     public Pair<TenantId, OAuth2ClientRegistration> getClientRegistrationWithTenant(String registrationId) {
-        return clientsParams.entrySet().stream()
+        return getAllOAuth2ClientsParams().entrySet().stream()
                 .map(entry -> {
                     TenantId tenantId = entry.getKey();
                     OAuth2ClientRegistration clientRegistration = toClientRegistrationStream(entry.getValue())
@@ -126,7 +115,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
         validateRegistrationIdUniqueness(oAuth2ClientsParams, TenantId.SYS_TENANT_ID);
 
-        cacheWriteLock.lock();
+        clientRegistrationSaveLock.lock();
         try {
             validateRegistrationIdUniqueness(oAuth2ClientsParams, TenantId.SYS_TENANT_ID);
             AdminSettings oauth2SystemAdminSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
@@ -136,9 +125,8 @@ public class OAuth2ServiceImpl implements OAuth2Service {
             String json = toJson(oAuth2ClientsParams);
             ((ObjectNode) oauth2SystemAdminSettings.getJsonValue()).put(SYSTEM_SETTINGS_OAUTH2_VALUE, json);
             adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, oauth2SystemAdminSettings);
-            clientsParams.put(TenantId.SYS_TENANT_ID, oAuth2ClientsParams);
         } finally {
-            cacheWriteLock.unlock();
+            clientRegistrationSaveLock.unlock();
         }
 
         return getSystemOAuth2ClientsParams();
@@ -152,7 +140,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         validate(oAuth2ClientsParams);
 
         validateRegistrationIdUniqueness(oAuth2ClientsParams, tenantId);
-        cacheWriteLock.lock();
+        clientRegistrationSaveLock.lock();
         try {
             validateRegistrationIdUniqueness(oAuth2ClientsParams, tenantId);
 
@@ -168,9 +156,8 @@ public class OAuth2ServiceImpl implements OAuth2Service {
                 throw new IncorrectParameterException("Unable to save OAuth2 Client Registration Params to attributes!");
             }
 
-            clientsParams.put(tenantId, oAuth2ClientsParams);
         } finally {
-            cacheWriteLock.unlock();
+            clientRegistrationSaveLock.unlock();
         }
 
         return getTenantOAuth2ClientsParams(tenantId);
@@ -259,7 +246,7 @@ public class OAuth2ServiceImpl implements OAuth2Service {
         toClientRegistrationStream(inputOAuth2ClientsParams)
                 .map(OAuth2ClientRegistration::getRegistrationId)
                 .forEach(registrationId -> {
-                    clientsParams.forEach((paramsTenantId, oAuth2ClientsParams) -> {
+                    getAllOAuth2ClientsParams().forEach((paramsTenantId, oAuth2ClientsParams) -> {
                         boolean registrationExists = toClientRegistrationStream(oAuth2ClientsParams)
                                 .map(OAuth2ClientRegistration::getRegistrationId)
                                 .anyMatch(registrationId::equals);
@@ -298,10 +285,6 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     @Override
     public OAuth2ClientsParams getSystemOAuth2ClientsParams() {
-        return clientsParams.get(TenantId.SYS_TENANT_ID);
-    }
-
-    private OAuth2ClientsParams getSystemOAuth2ClientsParamsFromDb() {
         AdminSettings oauth2ClientsParamsSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
         String json = null;
         if (oauth2ClientsParamsSettings != null) {
@@ -312,13 +295,24 @@ public class OAuth2ServiceImpl implements OAuth2Service {
 
     @Override
     public OAuth2ClientsParams getTenantOAuth2ClientsParams(TenantId tenantId) {
-        return clientsParams.get(tenantId);
+        ListenableFuture<String> jsonFuture;
+        if (isOAuth2ClientRegistrationAllowed(tenantId)) {
+            jsonFuture = getOAuth2ClientsParamsAttribute(tenantId);
+        } else {
+            jsonFuture = Futures.immediateFuture("");
+        }
+        try {
+            return Futures.transform(jsonFuture, this::constructOAuth2ClientsParams, MoreExecutors.directExecutor()).get();
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Failed to read OAuth2 Clients Params from attributes!", e);
+            throw new RuntimeException("Failed to read OAuth2 Clients Params from attributes!", e);
+        }
     }
 
     // TODO this is just for test, maybe there's a better way to test it without exporting to interface
     @Override
     public Map<TenantId, OAuth2ClientsParams> getAllOAuth2ClientsParams() {
-        OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParamsFromDb();
+        OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParams();
         ListenableFuture<Map<String, String>> jsonFuture = getAllOAuth2ClientsParamsAttribute();
         try {
             return Futures.transform(jsonFuture,
@@ -346,29 +340,47 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     @Override
     public void deleteTenantOAuth2ClientsParams(TenantId tenantId) {
         OAuth2ClientsParams params = getTenantOAuth2ClientsParams(tenantId);
-        if (params == null) return;
+        if (params == null || params.getClientsDomainsParams() == null) return;
         OAuth2ClientsDomainParams domainParams = params.getClientsDomainsParams().get(0);
         String settingsKey = constructAdminSettingsDomainKey(domainParams.getDomainName());
         adminSettingsService.deleteAdminSettingsByKey(tenantId, settingsKey);
         attributesService.removeAll(tenantId, tenantId, DataConstants.SERVER_SCOPE, Collections.singletonList(OAUTH2_CLIENT_REGISTRATIONS_PARAMS));
-        clientsParams.remove(tenantId);
     }
 
     @Override
     public void deleteSystemOAuth2ClientsParams() {
         adminSettingsService.deleteAdminSettingsByKey(TenantId.SYS_TENANT_ID, OAuth2Utils.OAUTH2_CLIENT_REGISTRATIONS_PARAMS);
-        clientsParams.remove(TenantId.SYS_TENANT_ID);
     }
 
     @Override
     public boolean isOAuth2ClientRegistrationAllowed(TenantId tenantId) {
         Tenant tenant = tenantService.findTenantById(tenantId);
+        if (tenant == null) return false;
         JsonNode allowOAuth2ConfigurationJsonNode = tenant.getAdditionalInfo() != null ? tenant.getAdditionalInfo().get(ALLOW_OAUTH2_CONFIGURATION) : null;
         if (allowOAuth2ConfigurationJsonNode == null) {
             return true;
         } else {
             return allowOAuth2ConfigurationJsonNode.asBoolean();
         }
+    }
+
+    private ListenableFuture<String> getOAuth2ClientsParamsAttribute(TenantId tenantId) {
+        ListenableFuture<List<AttributeKvEntry>> attributeKvEntriesFuture;
+        try {
+            attributeKvEntriesFuture = attributesService.find(tenantId, tenantId, DataConstants.SERVER_SCOPE,
+                    Collections.singletonList(OAUTH2_CLIENT_REGISTRATIONS_PARAMS));
+        } catch (Exception e) {
+            log.error("Unable to read OAuth2 Clients Params from attributes!", e);
+            throw new IncorrectParameterException("Unable to read OAuth2 Clients Params from attributes!");
+        }
+        return Futures.transform(attributeKvEntriesFuture, attributeKvEntries -> {
+            if (attributeKvEntries != null && !attributeKvEntries.isEmpty()) {
+                AttributeKvEntry kvEntry = attributeKvEntries.get(0);
+                return kvEntry.getValueAsString();
+            } else {
+                return "";
+            }
+        }, MoreExecutors.directExecutor());
     }
 
     // TODO maybe it's better to load all tenants and get attribute for each one
@@ -391,16 +403,22 @@ public class OAuth2ServiceImpl implements OAuth2Service {
     }
 
     private OAuth2ClientsDomainParams getMergedOAuth2ClientsParams(String domainName) {
-        AdminSettings oauth2ClientsSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, constructAdminSettingsDomainKey(domainName));
-        OAuth2ClientsDomainParams result;
+        OAuth2ClientsDomainParams result = OAuth2ClientsDomainParams.builder()
+                .domainName(domainName)
+                .clientRegistrations(new ArrayList<>())
+                .build();
 
         OAuth2ClientsParams systemOAuth2ClientsParams = getSystemOAuth2ClientsParams();
-        OAuth2ClientsDomainParams systemOAuth2ClientsDomainParams = systemOAuth2ClientsParams != null ?
+        OAuth2ClientsDomainParams systemOAuth2ClientsDomainParams = systemOAuth2ClientsParams != null && systemOAuth2ClientsParams.getClientsDomainsParams() != null ?
                 systemOAuth2ClientsParams.getClientsDomainsParams().stream()
                         .filter(oAuth2ClientsDomainParams -> domainName.equals(oAuth2ClientsDomainParams.getDomainName()))
                         .findFirst()
                         .orElse(null)
                 : null;
+
+        result = mergeDomainParams(result, systemOAuth2ClientsDomainParams);
+
+        AdminSettings oauth2ClientsSettings = adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, constructAdminSettingsDomainKey(domainName));
         if (oauth2ClientsSettings != null) {
             String strEntityType = oauth2ClientsSettings.getJsonValue().get("entityType").asText();
             String strEntityId = oauth2ClientsSettings.getJsonValue().get("entityId").asText();
@@ -410,18 +428,31 @@ public class OAuth2ServiceImpl implements OAuth2Service {
                 throw new IllegalStateException("Only tenant can configure OAuth2 for certain domain!");
             }
             TenantId tenantId = (TenantId) entityId;
-            result = getTenantOAuth2ClientsParams(tenantId).getClientsDomainsParams().get(0);
-            if (systemOAuth2ClientsDomainParams != null) {
-                ArrayList<OAuth2ClientRegistration> tenantClientRegistrations = new ArrayList<>(result.getClientRegistrations());
-                tenantClientRegistrations.addAll(systemOAuth2ClientsDomainParams.getClientRegistrations());
-                result = result.toBuilder()
-                        .clientRegistrations(tenantClientRegistrations)
-                        .build();
-            }
-        } else {
-            result = systemOAuth2ClientsDomainParams;
+            OAuth2ClientsParams tenantOAuth2ClientsParams = getTenantOAuth2ClientsParams(tenantId);
+            OAuth2ClientsDomainParams tenantDomainsParams = tenantOAuth2ClientsParams != null && tenantOAuth2ClientsParams.getClientsDomainsParams() != null ?
+                    tenantOAuth2ClientsParams.getClientsDomainsParams().stream().findFirst().orElse(null) : null;
+            result = mergeDomainParams(result, tenantDomainsParams);
         }
         return result;
+    }
+
+    private OAuth2ClientsDomainParams mergeDomainParams(OAuth2ClientsDomainParams sourceParams, OAuth2ClientsDomainParams newParams){
+        if (newParams == null) return sourceParams;
+
+        OAuth2ClientsDomainParams.OAuth2ClientsDomainParamsBuilder mergedParamsBuilder = sourceParams.toBuilder();
+
+        if (newParams.getClientRegistrations() != null){
+            List<OAuth2ClientRegistration> mergedClientRegistrations = sourceParams.getClientRegistrations() != null ?
+                    sourceParams.getClientRegistrations() : new ArrayList<>();
+            mergedClientRegistrations.addAll(newParams.getClientRegistrations());
+            mergedParamsBuilder.clientRegistrations(mergedClientRegistrations);
+        }
+
+        if (newParams.getAdminSettingsId() != null){
+            mergedParamsBuilder.adminSettingsId(newParams.getAdminSettingsId());
+        }
+
+        return mergedParamsBuilder.build();
     }
 
     private OAuth2ClientsParams constructOAuth2ClientsParams(String json) {
