@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class OAuth2Utils {
     public static final String OAUTH2_AUTHORIZATION_PATH_TEMPLATE = "/oauth2/authorization/%s";
 
-    public static OAuth2ClientInfo toClientInfo(OAuth2ClientRegistration clientRegistration) {
+    public static OAuth2ClientInfo toClientInfo(OAuth2ClientRegistrationInfo clientRegistration) {
         OAuth2ClientInfo client = new OAuth2ClientInfo();
         client.setName(clientRegistration.getLoginButtonLabel());
         client.setUrl(String.format(OAUTH2_AUTHORIZATION_PATH_TEMPLATE, clientRegistration.getUuidId().toString()));
@@ -34,7 +34,7 @@ public class OAuth2Utils {
         return client;
     }
 
-    public static List<OAuth2ClientRegistration> toClientRegistrations(OAuth2ClientsParams oAuth2Params) {
+    public static List<OAuth2ClientRegistrationInfo> toClientRegistrations(OAuth2ClientsParams oAuth2Params) {
         return oAuth2Params.getOAuth2DomainDtos().stream()
                 .flatMap(domainParams -> domainParams.getClientRegistrations().stream()
                         .map(clientRegistrationDto -> OAuth2Utils.toClientRegistration(oAuth2Params.isEnabled(),
@@ -45,10 +45,10 @@ public class OAuth2Utils {
                 .collect(Collectors.toList());
     }
 
-    public static OAuth2ClientsParams toOAuth2Params(List<OAuth2ClientRegistration> clientRegistrations) {
+    public static OAuth2ClientsParams toOAuth2Params(List<OAuth2ClientRegistrationInfo> clientRegistrations) {
         Map<String, OAuth2ClientsDomainParams> domainParamsMap = new HashMap<>();
         boolean enabled = true;
-        for (OAuth2ClientRegistration clientRegistration : clientRegistrations) {
+        for (OAuth2ClientRegistrationInfo clientRegistration : clientRegistrations) {
             enabled = clientRegistration.isEnabled();
             String domainName = clientRegistration.getDomainName();
             OAuth2ClientsDomainParams domainParams = domainParamsMap.computeIfAbsent(domainName,
@@ -60,30 +60,30 @@ public class OAuth2Utils {
         return new OAuth2ClientsParams(enabled, new ArrayList<>(domainParamsMap.values()));
     }
 
-    public static ClientRegistrationDto toClientRegistrationDto(OAuth2ClientRegistration oAuth2ClientRegistration) {
+    public static ClientRegistrationDto toClientRegistrationDto(OAuth2ClientRegistrationInfo oAuth2ClientRegistrationInfo) {
         return ClientRegistrationDto.builder()
-                .id(oAuth2ClientRegistration.getId())
-                .createdTime(oAuth2ClientRegistration.getCreatedTime())
-                .mapperConfig(oAuth2ClientRegistration.getMapperConfig())
-                .clientId(oAuth2ClientRegistration.getClientId())
-                .clientSecret(oAuth2ClientRegistration.getClientSecret())
-                .authorizationUri(oAuth2ClientRegistration.getAuthorizationUri())
-                .accessTokenUri(oAuth2ClientRegistration.getAccessTokenUri())
-                .scope(oAuth2ClientRegistration.getScope())
-                .userInfoUri(oAuth2ClientRegistration.getUserInfoUri())
-                .userNameAttributeName(oAuth2ClientRegistration.getUserNameAttributeName())
-                .jwkSetUri(oAuth2ClientRegistration.getJwkSetUri())
-                .clientAuthenticationMethod(oAuth2ClientRegistration.getClientAuthenticationMethod())
-                .loginButtonLabel(oAuth2ClientRegistration.getLoginButtonLabel())
-                .loginButtonIcon(oAuth2ClientRegistration.getLoginButtonIcon())
-                .additionalInfo(oAuth2ClientRegistration.getAdditionalInfo())
+                .id(oAuth2ClientRegistrationInfo.getId())
+                .createdTime(oAuth2ClientRegistrationInfo.getCreatedTime())
+                .mapperConfig(oAuth2ClientRegistrationInfo.getMapperConfig())
+                .clientId(oAuth2ClientRegistrationInfo.getClientId())
+                .clientSecret(oAuth2ClientRegistrationInfo.getClientSecret())
+                .authorizationUri(oAuth2ClientRegistrationInfo.getAuthorizationUri())
+                .accessTokenUri(oAuth2ClientRegistrationInfo.getAccessTokenUri())
+                .scope(oAuth2ClientRegistrationInfo.getScope())
+                .userInfoUri(oAuth2ClientRegistrationInfo.getUserInfoUri())
+                .userNameAttributeName(oAuth2ClientRegistrationInfo.getUserNameAttributeName())
+                .jwkSetUri(oAuth2ClientRegistrationInfo.getJwkSetUri())
+                .clientAuthenticationMethod(oAuth2ClientRegistrationInfo.getClientAuthenticationMethod())
+                .loginButtonLabel(oAuth2ClientRegistrationInfo.getLoginButtonLabel())
+                .loginButtonIcon(oAuth2ClientRegistrationInfo.getLoginButtonIcon())
+                .additionalInfo(oAuth2ClientRegistrationInfo.getAdditionalInfo())
                 .build();
     }
 
-    private static OAuth2ClientRegistration toClientRegistration(boolean enabled, String domainName,
-                                                                 String redirectUriTemplate,
-                                                                ClientRegistrationDto clientRegistrationDto) {
-        OAuth2ClientRegistration clientRegistration = new OAuth2ClientRegistration();
+    private static OAuth2ClientRegistrationInfo toClientRegistration(boolean enabled, String domainName,
+                                                                     String redirectUriTemplate,
+                                                                     ClientRegistrationDto clientRegistrationDto) {
+        OAuth2ClientRegistrationInfo clientRegistration = new OAuth2ClientRegistrationInfo();
         clientRegistration.setId(clientRegistrationDto.getId());
         clientRegistration.setEnabled(enabled);
         clientRegistration.setCreatedTime(clientRegistrationDto.getCreatedTime());

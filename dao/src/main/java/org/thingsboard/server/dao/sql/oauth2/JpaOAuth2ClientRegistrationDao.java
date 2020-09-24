@@ -15,8 +15,9 @@
  */
 package org.thingsboard.server.dao.sql.oauth2;
 
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.repository.CrudRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
 import org.thingsboard.server.dao.DaoUtil;
@@ -24,44 +25,16 @@ import org.thingsboard.server.dao.model.sql.OAuth2ClientRegistrationEntity;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientRegistrationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class JpaOAuth2ClientRegistrationDao extends JpaAbstractDao<OAuth2ClientRegistrationEntity, OAuth2ClientRegistration> implements OAuth2ClientRegistrationDao {
     private final OAuth2ClientRegistrationRepository repository;
 
     @Override
-    protected Class<OAuth2ClientRegistrationEntity> getEntityClass() {
-        return OAuth2ClientRegistrationEntity.class;
-    }
-
-    @Override
-    protected CrudRepository<OAuth2ClientRegistrationEntity, UUID> getCrudRepository() {
-        return repository;
-    }
-
-    @Override
-    public List<OAuth2ClientRegistration> findAll() {
-        Iterable<OAuth2ClientRegistrationEntity> entities = repository.findAll();
-        List<OAuth2ClientRegistration> result = new ArrayList<>();
-        entities.forEach(entity -> {
-            result.add(DaoUtil.getData(entity));
-        });
-        return result;
-    }
-
-    @Override
-    public List<OAuth2ClientRegistration> findByDomainName(String domainName) {
-        List<OAuth2ClientRegistrationEntity> entities = repository.findAllByDomainName(domainName);
-        return entities.stream().map(DaoUtil::getData).collect(Collectors.toList());
-    }
-
-    @Override
-    public int removeByDomainName(String domainName) {
-        return repository.deleteByDomainName(domainName);
+    public void deleteAll() {
+        repository.deleteAll();
     }
 }

@@ -49,14 +49,14 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
 
     @Test
     public void testCreateNewParams() {
-        OAuth2ClientRegistration clientRegistration = validClientRegistration("domain-name");
+        OAuth2ClientRegistrationInfo clientRegistration = validClientRegistration("domain-name");
         OAuth2ClientsParams savedOAuth2Params = oAuth2Service.saveOAuth2Params(OAuth2Utils.toOAuth2Params(Collections.singletonList(clientRegistration)));
         Assert.assertNotNull(savedOAuth2Params);
 
-        List<OAuth2ClientRegistration> savedClientRegistrations = OAuth2Utils.toClientRegistrations(savedOAuth2Params);
+        List<OAuth2ClientRegistrationInfo> savedClientRegistrations = OAuth2Utils.toClientRegistrations(savedOAuth2Params);
         Assert.assertEquals(1, savedClientRegistrations.size());
 
-        OAuth2ClientRegistration savedClientRegistration = savedClientRegistrations.get(0);
+        OAuth2ClientRegistrationInfo savedClientRegistration = savedClientRegistrations.get(0);
         Assert.assertNotNull(savedClientRegistration.getId());
         clientRegistration.setId(savedClientRegistration.getId());
         clientRegistration.setCreatedTime(savedClientRegistration.getCreatedTime());
@@ -67,15 +67,15 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindDomainParams() {
-        OAuth2ClientRegistration clientRegistration = validClientRegistration();
+        OAuth2ClientRegistrationInfo clientRegistration = validClientRegistration();
         oAuth2Service.saveOAuth2Params(OAuth2Utils.toOAuth2Params(Collections.singletonList(clientRegistration)));
 
         OAuth2ClientsParams foundOAuth2Params = oAuth2Service.findOAuth2Params();
         Assert.assertEquals(1, foundOAuth2Params.getOAuth2DomainDtos().size());
         Assert.assertEquals(1, oAuth2Service.findAllClientRegistrations().size());
 
-        List<OAuth2ClientRegistration> foundClientRegistrations = OAuth2Utils.toClientRegistrations(foundOAuth2Params);
-        OAuth2ClientRegistration foundClientRegistration = foundClientRegistrations.get(0);
+        List<OAuth2ClientRegistrationInfo> foundClientRegistrations = OAuth2Utils.toClientRegistrations(foundOAuth2Params);
+        OAuth2ClientRegistrationInfo foundClientRegistration = foundClientRegistrations.get(0);
         Assert.assertNotNull(foundClientRegistration);
         clientRegistration.setId(foundClientRegistration.getId());
         clientRegistration.setCreatedTime(foundClientRegistration.getCreatedTime());
@@ -85,15 +85,15 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
     @Test
     public void testGetOAuth2Clients() {
         String testDomainName = "test_domain";
-        OAuth2ClientRegistration first = validClientRegistration(testDomainName);
+        OAuth2ClientRegistrationInfo first = validClientRegistration(testDomainName);
         first.setEnabled(true);
-        OAuth2ClientRegistration second = validClientRegistration(testDomainName);
+        OAuth2ClientRegistrationInfo second = validClientRegistration(testDomainName);
         second.setEnabled(true);
 
         oAuth2Service.saveOAuth2Params(OAuth2Utils.toOAuth2Params(Collections.singletonList(first)));
         oAuth2Service.saveOAuth2Params(OAuth2Utils.toOAuth2Params(Collections.singletonList(second)));
 
-        List<OAuth2ClientInfo> oAuth2Clients = oAuth2Service.getOAuth2Clients(testDomainName);
+        List<OAuth2ClientInfo> oAuth2Clients = oAuth2Service.getOAuth2Clients(, testDomainName);
 
         Set<String> actualLabels = new HashSet<>(Arrays.asList(first.getLoginButtonLabel(),
                 second.getLoginButtonLabel()));
@@ -105,29 +105,29 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
     @Test
     public void testGetEmptyOAuth2Clients() {
         String testDomainName = "test_domain";
-        OAuth2ClientRegistration tenantClientRegistration = validClientRegistration(testDomainName);
-        OAuth2ClientRegistration sysAdminClientRegistration = validClientRegistration(testDomainName);
+        OAuth2ClientRegistrationInfo tenantClientRegistration = validClientRegistration(testDomainName);
+        OAuth2ClientRegistrationInfo sysAdminClientRegistration = validClientRegistration(testDomainName);
         oAuth2Service.saveOAuth2Params(OAuth2Utils.toOAuth2Params(Collections.singletonList(tenantClientRegistration)));
         oAuth2Service.saveOAuth2Params(OAuth2Utils.toOAuth2Params(Collections.singletonList(sysAdminClientRegistration)));
-        List<OAuth2ClientInfo> oAuth2Clients = oAuth2Service.getOAuth2Clients("random-domain");
+        List<OAuth2ClientInfo> oAuth2Clients = oAuth2Service.getOAuth2Clients(, "random-domain");
         Assert.assertTrue(oAuth2Clients.isEmpty());
     }
 
     @Test
     public void testDeleteOAuth2ClientRegistration() {
-        OAuth2ClientRegistration first = validClientRegistration();
-        OAuth2ClientRegistration second = validClientRegistration();
+        OAuth2ClientRegistrationInfo first = validClientRegistration();
+        OAuth2ClientRegistrationInfo second = validClientRegistration();
 
         OAuth2ClientsParams savedFirstOAuth2Params = oAuth2Service.saveOAuth2Params(
                 OAuth2Utils.toOAuth2Params(Collections.singletonList(first)));
         OAuth2ClientsParams savedSecondOAuth2Params = oAuth2Service.saveOAuth2Params(
                 OAuth2Utils.toOAuth2Params(Collections.singletonList(second)));
 
-        OAuth2ClientRegistration savedFirstRegistration = toClientRegistrations(savedFirstOAuth2Params).get(0);
-        OAuth2ClientRegistration savedSecondRegistration = toClientRegistrations(savedSecondOAuth2Params).get(0);
+        OAuth2ClientRegistrationInfo savedFirstRegistration = toClientRegistrations(savedFirstOAuth2Params).get(0);
+        OAuth2ClientRegistrationInfo savedSecondRegistration = toClientRegistrations(savedSecondOAuth2Params).get(0);
 
         oAuth2Service.deleteClientRegistrationById(savedFirstRegistration.getId());
-        List<OAuth2ClientRegistration> foundRegistrations = oAuth2Service.findAllClientRegistrations();
+        List<OAuth2ClientRegistrationInfo> foundRegistrations = oAuth2Service.findAllClientRegistrations();
         Assert.assertEquals(1, foundRegistrations.size());
         Assert.assertEquals(savedSecondRegistration, foundRegistrations.get(0));
     }
@@ -144,7 +144,7 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
         )));
         Assert.assertEquals(4, oAuth2Service.findAllClientRegistrations().size());
         OAuth2ClientsParams oAuth2Params = oAuth2Service.findOAuth2Params();
-        List<OAuth2ClientRegistration> clientRegistrations = toClientRegistrations(oAuth2Params);
+        List<OAuth2ClientRegistrationInfo> clientRegistrations = toClientRegistrations(oAuth2Params);
         Assert.assertEquals(2, oAuth2Params.getOAuth2DomainDtos().size());
         Assert.assertEquals(4, clientRegistrations.size());
 
@@ -154,12 +154,12 @@ public class BaseOAuth2ServiceTest extends AbstractServiceTest {
         Assert.assertEquals(2, toClientRegistrations(oAuth2Service.findOAuth2Params()).size());
     }
 
-    private OAuth2ClientRegistration validClientRegistration() {
+    private OAuth2ClientRegistrationInfo validClientRegistration() {
         return validClientRegistration(UUID.randomUUID().toString());
     }
 
-    private OAuth2ClientRegistration validClientRegistration(String domainName) {
-        OAuth2ClientRegistration clientRegistration = new OAuth2ClientRegistration();
+    private OAuth2ClientRegistrationInfo validClientRegistration(String domainName) {
+        OAuth2ClientRegistrationInfo clientRegistration = new OAuth2ClientRegistrationInfo();
         clientRegistration.setDomainName(domainName);
         clientRegistration.setMapperConfig(
                 OAuth2MapperConfig.builder()

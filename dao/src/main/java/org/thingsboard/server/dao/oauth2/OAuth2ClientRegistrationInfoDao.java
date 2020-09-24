@@ -15,8 +15,16 @@
  */
 package org.thingsboard.server.dao.oauth2;
 
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationInfo;
+import org.thingsboard.server.common.data.oauth2.SchemeType;
+import org.thingsboard.server.dao.Dao;
 
-public interface OAuth2ClientRegistrationDao {
+import java.util.List;
+
+public interface OAuth2ClientRegistrationInfoDao extends Dao<OAuth2ClientRegistrationInfo> {
+    List<OAuth2ClientRegistrationInfo> findAll();
+
+    List<OAuth2ClientRegistrationInfo> findByDomainSchemeAndDomainName(SchemeType domainScheme, String domainName);
+
     void deleteAll();
 }

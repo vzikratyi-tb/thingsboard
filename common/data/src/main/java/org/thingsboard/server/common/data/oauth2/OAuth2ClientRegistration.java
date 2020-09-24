@@ -15,68 +15,30 @@
  */
 package org.thingsboard.server.common.data.oauth2;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.thingsboard.server.common.data.HasName;
-import org.thingsboard.server.common.data.HasTenantId;
-import org.thingsboard.server.common.data.SearchTextBasedWithAdditionalInfo;
+import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationId;
-import org.thingsboard.server.common.data.id.TenantId;
-
-import java.util.List;
+import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationInfoId;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@ToString(exclude = {"clientSecret"})
+@ToString
 @NoArgsConstructor
-public class OAuth2ClientRegistration extends SearchTextBasedWithAdditionalInfo<OAuth2ClientRegistrationId> implements HasName {
+public class OAuth2ClientRegistration extends BaseData<OAuth2ClientRegistrationId> {
 
-    private boolean enabled;
+    private OAuth2ClientRegistrationInfoId clientRegistrationId;
     private String domainName;
-    private String redirectUriTemplate;
-    private OAuth2MapperConfig mapperConfig;
-    private String clientId;
-    private String clientSecret;
-    private String authorizationUri;
-    private String accessTokenUri;
-    private List<String> scope;
-    private String userInfoUri;
-    private String userNameAttributeName;
-    private String jwkSetUri;
-    private String clientAuthenticationMethod;
-    private String loginButtonLabel;
-    private String loginButtonIcon;
+    private String domainScheme;
+    private int domainPort;
 
     public OAuth2ClientRegistration(OAuth2ClientRegistration clientRegistration) {
         super(clientRegistration);
-        this.enabled = clientRegistration.enabled;
+        this.clientRegistrationId = clientRegistration.clientRegistrationId;
         this.domainName = clientRegistration.domainName;
-        this.redirectUriTemplate = clientRegistration.redirectUriTemplate;
-        this.mapperConfig = clientRegistration.mapperConfig;
-        this.clientId = clientRegistration.clientId;
-        this.clientSecret = clientRegistration.clientSecret;
-        this.authorizationUri = clientRegistration.authorizationUri;
-        this.accessTokenUri = clientRegistration.accessTokenUri;
-        this.scope = clientRegistration.scope;
-        this.userInfoUri = clientRegistration.userInfoUri;
-        this.userNameAttributeName = clientRegistration.userNameAttributeName;
-        this.jwkSetUri = clientRegistration.jwkSetUri;
-        this.clientAuthenticationMethod = clientRegistration.clientAuthenticationMethod;
-        this.loginButtonLabel = clientRegistration.loginButtonLabel;
-        this.loginButtonIcon = clientRegistration.loginButtonIcon;
-    }
-
-    @Override
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    public String getName() {
-        return loginButtonLabel;
-    }
-
-    @Override
-    public String getSearchText() {
-        return getName();
+        this.domainScheme = clientRegistration.domainScheme;
+        this.domainPort = clientRegistration.domainPort;
     }
 }

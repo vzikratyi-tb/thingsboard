@@ -26,7 +26,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class OAuth2ClientsDomainParams {
-    private String domainName;
-    private String redirectUriTemplate;
+    private List<DomainInfo> domainInfos;
     private List<ClientRegistrationDto> clientRegistrations;
 }

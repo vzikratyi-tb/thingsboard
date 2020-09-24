@@ -19,19 +19,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.oauth2.SchemeType;
-import org.thingsboard.server.dao.model.sql.ClientRegistrationToDomainCompositeKey;
-import org.thingsboard.server.dao.model.sql.OAuth2ClientRegistrationEntity;
 import org.thingsboard.server.dao.model.sql.OAuth2ClientRegistrationInfoEntity;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface OAuth2ClientRegistrationRepository extends CrudRepository<OAuth2ClientRegistrationEntity, UUID> {
-    @Query("SELECT OAuth2ClientRegistrationInfoEntity " +
-            "FROM OAuth2ClientRegistrationInfoEntity cr " +
-            "LEFT JOIN OAuth2ClientRegistrationEntity cr_to_domain on cr.id = cr_to_domain.clientRegistrationId " +
-            "WHERE cr_to_domain.domainName = :domainName " +
-            "AND cr_to_domain.domainScheme = :domainScheme")
-    List<OAuth2ClientRegistrationInfoEntity> findAllByDomainSchemeAndName(@Param("domainScheme") SchemeType domainScheme,
-                                                                          @Param("domainName") String domainName);
+public interface OAuth2ClientRegistrationInfoRepository extends CrudRepository<OAuth2ClientRegistrationInfoEntity, UUID> {
+
 }

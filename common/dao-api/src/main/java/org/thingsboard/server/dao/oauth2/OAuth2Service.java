@@ -15,26 +15,22 @@
  */
 package org.thingsboard.server.dao.oauth2;
 
-import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistration;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientsParams;
+import org.thingsboard.server.common.data.oauth2.SchemeType;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface OAuth2Service {
-    List<OAuth2ClientInfo> getOAuth2Clients(String domainName);
+    List<OAuth2ClientInfo> getOAuth2Clients(SchemeType domainScheme, String domainName);
 
     OAuth2ClientsParams saveOAuth2Params(OAuth2ClientsParams oauth2Params);
 
     OAuth2ClientsParams findOAuth2Params();
 
-    OAuth2ClientRegistration findClientRegistration(UUID id);
+    OAuth2ClientRegistrationInfo findClientRegistration(UUID id);
 
-    List<OAuth2ClientRegistration> findAllClientRegistrations();
-
-    void deleteClientRegistrationById(OAuth2ClientRegistrationId id);
-
-    void deleteClientRegistrationsByDomain(String domain);
+    List<OAuth2ClientRegistrationInfo> findAllClientRegistrations();
 }
