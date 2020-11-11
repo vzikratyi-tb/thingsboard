@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.msg.cache.AttributesCacheUpdatedMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -33,10 +34,12 @@ import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionChangeEvent;
 import org.thingsboard.server.common.transport.util.DataDecodingEncodingService;
+import org.thingsboard.server.service.attributes.TbAttributesCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.TbPackCallback;
 import org.thingsboard.server.service.queue.TbPackProcessingContext;
 
+import javax.annotation.Nullable;
 import javax.annotation.PreDestroy;
 import java.util.List;
 import java.util.Optional;
@@ -61,13 +64,18 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected final DataDecodingEncodingService encodingService;
     protected final TbDeviceProfileCache deviceProfileCache;
 
+    @Nullable
+    private final TbAttributesCache attributesCache;
+
     protected final TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer;
 
     public AbstractConsumerService(ActorSystemContext actorContext, DataDecodingEncodingService encodingService,
-                                   TbDeviceProfileCache deviceProfileCache, TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
+                                   TbDeviceProfileCache deviceProfileCache, Optional<TbAttributesCache> attributesCacheOpt,
+                                   TbQueueConsumer<TbProtoQueueMsg<N>> nfConsumer) {
         this.actorContext = actorContext;
         this.encodingService = encodingService;
         this.deviceProfileCache = deviceProfileCache;
+        this.attributesCache = attributesCacheOpt.orElse(null);
         this.nfConsumer = nfConsumer;
     }
 
@@ -151,6 +159,27 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             }
             log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg);
             actorContext.tellWithHighPriority(actorMsg);
+        }
+    }
+
+    protected void handleAttributesCacheUpdatedMsg(UUID id, ByteString nfMsg) {
+        if (attributesCache == null) {
+            return;
+        }
+        Optional<TbActorMsg> actorMsgOpt = encodingService.decode(nfMsg.toByteArray());
+        if (actorMsgOpt.isPresent()) {
+            TbActorMsg actorMsg = actorMsgOpt.get();
+            if (actorMsg instanceof AttributesCacheUpdatedMsg) {
+                AttributesCacheUpdatedMsg attributesCacheUpdatedMsg = (AttributesCacheUpdatedMsg) actorMsg;
+                if (AttributesCacheUpdatedMsg.INVALIDATE_ALL_CACHE_MSG.equals(attributesCacheUpdatedMsg)) {
+                    log.info("[{}] Clearing all attributes cache", id);
+                    attributesCache.invalidateAll();
+                } else {
+                    log.trace("[{}] Clearing attributes cache for {}", id, attributesCacheUpdatedMsg);
+                    attributesCache.evict(attributesCacheUpdatedMsg.getTenantId(), attributesCacheUpdatedMsg.getEntityId(),
+                            attributesCacheUpdatedMsg.getScope(), attributesCacheUpdatedMsg.getAttributeKeys());
+                }
+            }
         }
     }
 

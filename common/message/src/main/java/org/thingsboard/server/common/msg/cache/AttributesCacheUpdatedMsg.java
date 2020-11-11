@@ -13,47 +13,45 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.plugin;
+package org.thingsboard.server.common.msg.cache;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.aware.EntityAwareMsg;
 import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
 import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 
-import java.util.Optional;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
-/**
- * @author Andrew Shvayka
- */
 @ToString
-public class ComponentLifecycleMsg implements TenantAwareMsg, EntityAwareMsg, ToAllNodesMsg {
+@EqualsAndHashCode
+public class AttributesCacheUpdatedMsg implements TenantAwareMsg, EntityAwareMsg, ToAllNodesMsg {
+    public static final AttributesCacheUpdatedMsg INVALIDATE_ALL_CACHE_MSG = new AttributesCacheUpdatedMsg(TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID,
+            null, Collections.emptyList());
     @Getter
     private final TenantId tenantId;
     @Getter
     private final EntityId entityId;
     @Getter
-    private final ComponentLifecycleEvent event;
+    private final String scope;
+    @Getter
+    private final List<String> attributeKeys;
 
-    public ComponentLifecycleMsg(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent event) {
+    public AttributesCacheUpdatedMsg(TenantId tenantId, EntityId entityId, String scope, List<String> attributeKeys) {
         this.tenantId = tenantId;
         this.entityId = entityId;
-        this.event = event;
-    }
-
-    public Optional<RuleChainId> getRuleChainId() {
-        return entityId.getEntityType() == EntityType.RULE_CHAIN ? Optional.of((RuleChainId) entityId) : Optional.empty();
+        this.scope = scope;
+        this.attributeKeys = attributeKeys;
     }
 
     @Override
     public MsgType getMsgType() {
-        return MsgType.COMPONENT_LIFE_CYCLE_MSG;
+        return MsgType.ATTRIBUTES_CACHE_UPDATED_MSG;
     }
 }

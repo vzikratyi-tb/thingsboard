@@ -13,11 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.service.attributes.sql;
+package org.thingsboard.server.service.attributes;
 
-import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.dao.service.attributes.DaoAttributesServiceTest;
+import lombok.Data;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-@DaoSqlTest
-public class AttributesServiceSqlTest extends DaoAttributesServiceTest {
+@Configuration
+@ConditionalOnProperty(prefix = "cache.attributes", value = "enabled", havingValue = "true")
+@ConfigurationProperties(prefix = "cache.attributes")
+@Data
+public class AttributesCacheConfiguration {
+    private int maxSizePerTenant;
+    private int expireAfterAccessInMinutes;
 }
